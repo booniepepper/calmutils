@@ -5,7 +5,10 @@
 const std = @import("std");
 const calmutils = @import("root.zig");
 
-const WCError = error{UnknownOption};
+const Error = error{
+    NotYetSupported,
+    UnknownOption,
+};
 
 const Files = std.ArrayList([]const u8);
 
@@ -68,13 +71,8 @@ pub fn main() !void {
 }
 
 fn go(plan: WC, stdout: anytype, allocator: std.mem.Allocator) !void {
-    if (plan.help) {
-        return try help(stdout);
-    }
-
-    if (plan.version) {
-        return try version(stdout);
-    }
+    if (plan.help) return try help(stdout);
+    if (plan.version) return try version(stdout);
 
     if (plan.files.items.len == 0) {
         const counts = try countFile(std.io.getStdIn(), allocator);
@@ -170,32 +168,28 @@ fn parseArgs(allocator: std.mem.Allocator) !WC {
     _ = args.next();
 
     while (args.next()) |arg| {
-        if (eql(arg, "--help")) {
-            plan.help = true;
-        } else if (eql(arg, "--version")) {
-            plan.version = true;
-        } else if (eql(arg, "--bytes")) {
-            plan.bytes = true;
-        } else if (eql(arg, "--chars")) {
-            plan.chars = true;
-        } else if (eql(arg, "--lines")) {
-            plan.lines = true;
-        } else if (eql(arg, "--words")) {
-            plan.words = true;
-        } else if (arg.len > 1 and std.mem.startsWith(u8, arg, "-")) {
-            for (arg[1..]) |c| {
-                switch (c) {
-                    'c' => plan.bytes = true,
-                    'l' => plan.lines = true,
-                    'L' => plan.max_lines = true,
-                    'm' => plan.chars = true,
-                    'w' => plan.words = true,
-                    else => return WCError.UnknownOption,
-                }
-            }
-        } else {
-            try plan.files.append(arg);
-        }
+        if (eql(arg, "--help"))
+            plan.help = true
+        else if (eql(arg, "--version"))
+            plan.version = true
+        else if (eql(arg, "--bytes"))
+            plan.bytes = true
+        else if (eql(arg, "--chars"))
+            return Error.NotYetSupported // plan.chars = true;
+        else if (eql(arg, "--lines"))
+            plan.lines = true
+        else if (eql(arg, "--words"))
+            plan.words = true
+        else if (arg.len > 1 and std.mem.startsWith(u8, arg, "-")) {
+            for (arg[1..]) |c| switch (c) {
+                'c' => plan.bytes = true,
+                'l' => plan.lines = true,
+                'L' => plan.max_lines = true,
+                'm' => return Error.NotYetSupported, // plan.chars = true,
+                'w' => plan.words = true,
+                else => return Error.UnknownOption,
+            };
+        } else try plan.files.append(arg);
     }
 
     plan.default = !plan.bytes and !plan.chars and !plan.words and !plan.lines;
