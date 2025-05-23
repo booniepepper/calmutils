@@ -1,0 +1,7 @@
+calm utils
+----------
+
+An attempt at growing my own collection of command-line utilities. Inspired by
+POSIX, BusyBox, GNU coreutils, and (Free/Net/Open/etc) BSD base systems.
+
+Started 2025 by Justin Hill
