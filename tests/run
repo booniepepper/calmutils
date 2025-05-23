@@ -1,0 +1,22 @@
+#!/bin/sh
+
+testroot="$(realpath $(dirname "$0"))"
+outroot="$(realpath "$testroot/../out")"
+
+PATH="$(realpath "$outroot")/bin:$PATH"
+
+# TODO: chroot jail this stuff
+for util in "$testroot/"*; do
+  if [ -d "$util" ]; then
+    echo "=== $(basename "$util") ==="
+    for test in "$util/"*; do
+      cd "$test" || exit 1
+      testname="$(basename "$test")"
+      if [ "$(sh -c "./run")" = "$(cat "./output")" ]; then
+        echo "PASS\t$testname"
+      else
+        echo "FAIL\t$testname\t[$(cat ./run)]"
+      fi
+    done
+  fi
+done

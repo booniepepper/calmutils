@@ -14,6 +14,7 @@ do
 
     build) mkdir -p "$outbin"; zig build-exe "$root/src/$util.zig" -femit-bin="$outbin/$util" ;;
     clean) rm -r "$outbin" ;;
+    e2e) "$root/tests/run" ;;
     fmt) zig fmt "$root/src" ;;
     fuzz) zig test -ffuzz "$root/src/$util.zig" ;;
     test) zig test "$root/src/$util.zig" ;;

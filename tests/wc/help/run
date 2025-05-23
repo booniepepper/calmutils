@@ -1,0 +1,1 @@
+wc --help | head -n 1
