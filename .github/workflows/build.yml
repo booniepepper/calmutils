@@ -1,0 +1,15 @@
+name: build
+on:
+  pull_request:
+    branches: [core]
+  push:
+    branches: [core]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: ./build.sh test
+      - run: ./build.sh build
+      - run: ./build.sh e2e
