@@ -57,6 +57,7 @@ const FileCounts = struct {
 pub fn main() !void {
     var world = calmutils.World.init();
     const stdout = world.stdout.writer();
+    const stderr = world.stderr.writer();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -64,12 +65,12 @@ pub fn main() !void {
     const plan = try parseArgs(allocator);
     defer plan.files.deinit();
 
-    try go(plan, stdout, allocator);
+    try go(plan, stdout, stderr, allocator);
 
     try world.deinit();
 }
 
-fn go(plan: WC, stdout: anytype, allocator: std.mem.Allocator) !void {
+fn go(plan: WC, stdout: anytype, stderr: anytype, allocator: std.mem.Allocator) !void {
     if (plan.help) return try help(stdout);
     if (plan.version) return try version(stdout);
 
@@ -88,13 +89,25 @@ fn go(plan: WC, stdout: anytype, allocator: std.mem.Allocator) !void {
         .words = 0,
     };
 
-    for (plan.files.items) |file| {
+    count: for (plan.files.items) |file| {
         const f = if (std.mem.eql(u8, file, "-"))
             std.io.getStdIn()
         else
-            try cwd.openFile(file, .{});
+            cwd.openFile(file, .{}) catch |err| switch (err) {
+                error.FileNotFound => {
+                    try stderr.print("{s}: No such file or directory", .{file});
+                    continue :count;
+                },
+                else => return err,
+            };
 
-        const counts = try countFile(f, allocator);
+        const counts = countFile(f, allocator) catch |err| switch (err) {
+            error.IsDir => {
+                try stderr.print("{s}: Is a directory", .{file});
+                continue :count;
+            },
+            else => return err,
+        };
 
         try counts.print(plan, stdout);
         try stdout.print("{s}\n", .{file});
