@@ -37,8 +37,7 @@ const FileCounts = struct {
         self.lines += other.lines;
         self.words += other.words;
 
-        if (other.max_line > self.max_line)
-            self.max_line = other.max_line;
+        self.max_line = std.mem.max(u64, &[2]u64{ self.max_line, other.max_line });
     }
 
     pub fn print(self: FileCounts, plan: WC, stdout: anytype) !void {

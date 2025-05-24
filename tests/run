@@ -5,6 +5,14 @@ outroot="$(realpath "$testroot/../out")"
 
 PATH="$(realpath "$outroot")/bin:$PATH"
 
+color() {
+  case "$1" in
+    red) echo -n "\033[31m" ;;
+    grey) echo -n "\033[90m" ;;
+    clear) echo -n "\033[0m" ;;
+  esac
+}
+
 # TODO: chroot jail this stuff
 for util in "$testroot/"*; do
   if [ -d "$util" ]; then
@@ -12,10 +20,20 @@ for util in "$testroot/"*; do
     for test in "$util/"*; do
       cd "$test" || exit 1
       testname="$(basename "$test")"
-      if [ "$(sh -c "./run")" = "$(cat "./output")" ]; then
+
+      expected="$(cat "./output")"
+      actual="$(sh -c "./run")"
+
+      if [ "$actual" = "$expected" ]; then
         echo "PASS\t$testname"
       else
-        echo "FAIL\t$testname\t[$(cat ./run)]"
+        color red
+        echo "FAIL\t$testname"
+        color grey
+        echo "==> ran:\n$(cat ./run)"
+        echo "==> expected:\n$expected"
+        echo "==> actual:\n$actual"
+        color clear
       fi
     done
   fi
